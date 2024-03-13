@@ -390,6 +390,7 @@ mlir::Type CIRGenTypes::ConvertType(QualType T) {
 #define DEPENDENT_TYPE(Class, Base) case Type::Class:
 #define NON_CANONICAL_UNLESS_DEPENDENT_TYPE(Class, Base) case Type::Class:
 #include "clang/AST/TypeNodes.inc"
+
     llvm_unreachable("Non-canonical or dependent types aren't possible.");
 
   case Type::ArrayParameter:
@@ -515,8 +516,10 @@ mlir::Type CIRGenTypes::ConvertType(QualType T) {
 #define IMAGE_TYPE(ImgType, Id, SingletonId, Access, Suffix)                   \
   case BuiltinType::Id:
 #include "clang/Basic/OpenCLImageTypes.def"
+
 #define EXT_OPAQUE_TYPE(ExtType, Id, Ext) case BuiltinType::Id:
 #include "clang/Basic/OpenCLExtensionTypes.def"
+
     case BuiltinType::OCLSampler:
     case BuiltinType::OCLEvent:
     case BuiltinType::OCLClkEvent:
@@ -581,8 +584,10 @@ mlir::Type CIRGenTypes::ConvertType(QualType T) {
     assert(0 && "not implemented");                                            \
     break;
 #include "clang/Basic/PPCTypes.def"
+
 #define RVV_TYPE(Name, Id, SingletonId) case BuiltinType::Id:
 #include "clang/Basic/RISCVVTypes.def"
+
       {
         assert(0 && "not implemented");
         break;
@@ -591,6 +596,7 @@ mlir::Type CIRGenTypes::ConvertType(QualType T) {
 #define BUILTIN_TYPE(Id, SingletonId)
 #define PLACEHOLDER_TYPE(Id, SingletonId) case BuiltinType::Id:
 #include "clang/AST/BuiltinTypes.def"
+
       llvm_unreachable("Unexpected placeholder builtin type!");
     }
     break;
@@ -607,9 +613,9 @@ mlir::Type CIRGenTypes::ConvertType(QualType T) {
     const ReferenceType *RTy = cast<ReferenceType>(Ty);
     QualType ETy = RTy->getPointeeType();
     auto PointeeType = convertTypeForMem(ETy);
-    // TODO(cir): use Context.getTargetAddressSpace(ETy) on pointer
-    ResultType =
-        ::mlir::cir::PointerType::get(Builder.getContext(), PointeeType);
+    ResultType = ::mlir::cir::PointerType::get(
+        Builder.getContext(), PointeeType,
+        Context.getTargetAddressSpace(ETy.getAddressSpace()));
     assert(ResultType && "Cannot get pointer type?");
     break;
   }
@@ -624,9 +630,9 @@ mlir::Type CIRGenTypes::ConvertType(QualType T) {
     // if (PointeeType->isVoidTy())
     //  PointeeType = Builder.getI8Type();
 
-    // FIXME: add address specifier to cir::PointerType?
-    ResultType =
-        ::mlir::cir::PointerType::get(Builder.getContext(), PointeeType);
+    ResultType = ::mlir::cir::PointerType::get(
+        Builder.getContext(), PointeeType,
+        Context.getTargetAddressSpace(ETy.getAddressSpace()));
     assert(ResultType && "Cannot get pointer type?");
     break;
   }

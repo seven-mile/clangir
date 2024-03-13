@@ -12,9 +12,9 @@
 
 #include "MissingFeatures.h"
 
-#include "clang/CIR/Dialect/IR/CIRTypes.h"
 #include "clang/CIR/Dialect/IR/CIRAttrs.h"
 #include "clang/CIR/Dialect/IR/CIRDialect.h"
+#include "clang/CIR/Dialect/IR/CIRTypes.h"
 #include "clang/CIR/Dialect/IR/CIRTypesDetails.h"
 
 #include "mlir/IR/Attributes.h"
@@ -94,6 +94,32 @@ void CIRDialect::printType(Type type, DialectAsmPrinter &os) const {
       .Default([](Type) {
         llvm::report_fatal_error("printer is missing a handler for this type");
       });
+}
+
+Type PointerType::parse(mlir::AsmParser &parser) {
+  if (parser.parseLess())
+    return Type();
+  Type pointeeType;
+  unsigned addrSpace = 0;
+  if (parser.parseType(pointeeType))
+    return Type();
+  if (parser.parseOptionalComma().succeeded()) {
+    if (parser.parseInteger(addrSpace))
+      return Type();
+  }
+  if (parser.parseGreater())
+    return Type();
+  return get(parser.getContext(), pointeeType, addrSpace);
+}
+
+void PointerType::print(mlir::AsmPrinter &printer) const {
+  printer << '<';
+  printer.printType(getPointee());
+  if (auto addrSpace = getAddrSpace()) {
+    printer << ", ";
+    printer << addrSpace;
+  }
+  printer << '>';
 }
 
 Type BoolType::parse(mlir::AsmParser &parser) {
@@ -830,6 +856,7 @@ void CIRDialect::registerTypes() {
   addTypes<
 #define GET_TYPEDEF_LIST
 #include "clang/CIR/Dialect/IR/CIROpsTypes.cpp.inc"
+
       >();
 
   // Register raw C++ types.
