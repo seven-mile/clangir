@@ -34,6 +34,21 @@ enum {
   /// with typical C calling conventions, the callee/caller have to tolerate
   /// certain amounts of prototype mismatch.
   C = 0,
+
+  /// Used for SPIR non-kernel device functions. No lowering or expansion of
+  /// arguments. Structures are passed as a pointer to a struct with the
+  /// byval attribute. Functions can only call SPIR_FUNC and SPIR_KERNEL
+  /// functions. Functions can only have zero or one return values. Variable
+  /// arguments are not allowed, except for printf. How arguments/return
+  /// values are lowered are not specified. Functions are only visible to the
+  /// devices.
+  SPIR_FUNC = 75,
+
+  /// Used for SPIR kernel functions. Inherits the restrictions of SPIR_FUNC,
+  /// except it cannot have non-void return values, it cannot have variable
+  /// arguments, it can also be called by the host or it is externally
+  /// visible.
+  SPIR_KERNEL = 76,
 };
 
 } // namespace CallingConv
