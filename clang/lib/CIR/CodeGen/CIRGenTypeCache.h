@@ -128,7 +128,6 @@ struct CIRGenTypeCache {
     // alloca address space can be used for now only for comparison with the
     // default address space.
     assert(!MissingFeatures::addressSpace());
-    assert(ASTAllocaAddressSpace == clang::LangAS::Default);
     return ASTAllocaAddressSpace;
   }
 };

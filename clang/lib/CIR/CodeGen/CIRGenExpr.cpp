@@ -2945,7 +2945,10 @@ Address CIRGenFunction::CreateTempAlloca(mlir::Type Ty, CharUnits Align,
   // in C++ the auto variables are in the default address space. Therefore
   // cast alloca to the default address space when necessary.
   if (getASTAllocaAddressSpace() != LangAS::Default) {
-    llvm_unreachable("Requires address space cast which is NYI");
+    auto DestAddrSpace = getContext().getTargetAddressSpace(LangAS::Default);
+    V = getTargetHooks().performAddrSpaceCast(
+        *this, V, getASTAllocaAddressSpace(), LangAS::Default,
+        builder.getPointerTo(Ty, DestAddrSpace), /*non-null*/ true);
   }
   return Address(V, Ty, Align);
 }

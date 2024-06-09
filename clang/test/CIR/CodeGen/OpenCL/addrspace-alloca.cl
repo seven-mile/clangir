@@ -3,9 +3,9 @@
 // RUN: %clang_cc1 -cl-std=CL3.0 -O0 -fclangir -S -emit-llvm -triple spirv64-unknown-unknown %s -o %t.ll
 // RUN: FileCheck --input-file=%t.ll %s --check-prefix=LLVM
 
-// CIR: cir.func @func(%arg0: !cir.ptr<!s32i, addrspace(3)>
-// LLVM: @func(ptr addrspace(3)
-kernel void func(local int *p) {
+// CIR: cir.func @foo(%arg0: !cir.ptr<!s32i, addrspace(3)>
+// LLVM: @foo(ptr addrspace(3)
+kernel void foo(local int *p) {
   // CIR-NEXT: %[[#ALLOCA_P:]] = cir.alloca !cir.ptr<!s32i, addrspace(3)>, !cir.ptr<!cir.ptr<!s32i, addrspace(3)>>, ["p", init] {alignment = 8 : i64}
   // LLVM-NEXT: %[[#ALLOCA_P:]] = alloca ptr addrspace(3), i64 1, align 8
 
@@ -22,4 +22,19 @@ kernel void func(local int *p) {
   // LLVM-NEXT: store ptr addrspace(3) %{{[0-9]+}}, ptr %[[#ALLOCA_P]], align 8
 
   return;
+}
+
+// CIR: cir.func @bar(
+// LLVM: @bar(
+kernel void bar() {
+  void * arr = __builtin_alloca(2 * sizeof(int));
+  // CIR:      %[[#ALLOCA:]] = cir.alloca !u8i, !cir.ptr<!u8i>, %{{[0-9]+}} : !u64i, ["bi_alloca"] {alignment = 8 : i64}
+  // CIR-NEXT: %[[#PRIVATE_VOID_PTR:]] = cir.cast(bitcast, %[[#ALLOCA]] : !cir.ptr<!u8i>), !cir.ptr<!void>
+  // CIR-NEXT: %[[#GENERIC_VOID_PTR:]] = cir.cast(address_space, %[[#PRIVATE_VOID_PTR:]] : !cir.ptr<!void>), !cir.ptr<!void, addrspace(4)>
+  // CIR-NEXT: cir.store %[[#GENERIC_VOID_PTR]], %{{[0-9]+}} : !cir.ptr<!void, addrspace(4)>, !cir.ptr<!cir.ptr<!void, addrspace(4)>>
+
+  // LLVM:      %[[#ALLOCA:]] = alloca i8, i64 8, align 8
+  // LLVM-NEXT: %[[#GENERIC_VOID_PTR:]] = addrspacecast ptr %[[#ALLOCA]] to ptr addrspace(4)
+  // LLVM-NEXT: store ptr addrspace(4) %[[#GENERIC_VOID_PTR]], ptr %{{[0-9]+}}, align 8
+
 }

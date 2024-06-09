@@ -993,21 +993,24 @@ RValue CIRGenFunction::buildBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
     if (BuiltinID != Builtin::BI__builtin_alloca_uninitialized)
       initializeAlloca(*this, AllocaAddr, Size, SuitableAlignmentInBytes);
 
+    // Bitcast the alloca to the expected type.
+    auto resAddr = builder.createBitcast(
+        AllocaAddr, builder.getVoidPtrTy(CGM.AllocaInt8PtrTy.getAddrSpace()));
+
     // An alloca will always return a pointer to the alloca (stack) address
     // space. This address space need not be the same as the AST / Language
     // default (e.g. in C / C++ auto vars are in the generic address space). At
     // the AST level this is handled within CreateTempAlloca et al., but for the
     // builtin / dynamic alloca we have to handle it here.
-    assert(!MissingFeatures::addressSpace());
     LangAS AAS = getASTAllocaAddressSpace();
     LangAS EAS = E->getType()->getPointeeType().getAddressSpace();
-    if (EAS != AAS) {
-      assert(false && "Non-default address space for alloca NYI");
+    if (AAS != EAS) {
+      mlir::Type Ty = CGM.getTypes().ConvertType(E->getType());
+      return RValue::get(
+          getTargetHooks().performAddrSpaceCast(*this, resAddr, AAS, EAS, Ty));
     }
 
-    // Bitcast the alloca to the expected type.
-    return RValue::get(
-        builder.createBitcast(AllocaAddr, builder.getVoidPtrTy()));
+    return RValue::get(resAddr);
   }
 
   case Builtin::BI__sync_fetch_and_add:

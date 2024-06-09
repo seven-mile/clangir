@@ -257,6 +257,11 @@ public:
   CommonSPIRTargetCIRGenInfo(std::unique_ptr<ABIInfo> ABIInfo)
       : TargetCIRGenInfo(std::move(ABIInfo)) {}
 
+  LangAS getASTAllocaAddressSpace() const override {
+    return getLangASFromTargetAS(
+        getABIInfo().CGT.getModule().getDataLayout().getAllocaMemorySpace());
+  }
+
   unsigned getOpenCLKernelCallingConv() const override {
     return llvm::CallingConv::SPIR_KERNEL;
   }
