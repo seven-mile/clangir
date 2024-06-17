@@ -8,3 +8,15 @@
 void foo(int __attribute__((address_space(1))) *arg) {
   return;
 }
+
+// CIR: cir.func {{@.*bar.*}}(%arg0: !cir.ptr<!s32i, addrspace(0)>
+// LLVM: define void @bar(ptr %0)
+void bar(int __attribute__((address_space(0))) *arg) {
+  return;
+}
+
+// CIR: cir.func {{@.*baz.*}}(%arg0: !cir.ptr<!s32i>
+// LLVM: define void @baz(ptr %0)
+void baz(int *arg) {
+  return;
+}

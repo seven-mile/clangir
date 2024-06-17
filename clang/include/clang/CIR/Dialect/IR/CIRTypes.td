@@ -209,24 +209,22 @@ def CIR_PointerType : CIR_Type<"Pointer", "ptr",
   }];
 
   let parameters = (ins "mlir::Type":$pointee,
-                        DefaultValuedParameter<"unsigned", "0">:$addrSpace);
+                        OptionalParameter<
+                          "std::optional<unsigned>"
+                        >:$addrSpace);
 
   let builders = [
-    TypeBuilderWithInferredContext<(ins
-      "mlir::Type":$pointee, CArg<"unsigned", "0">:$addrSpace), [{
-      return Base::get(pointee.getContext(), pointee, addrSpace);
+    TypeBuilderWithInferredContext<(ins "mlir::Type":$pointee), [{
+      return Base::get(pointee.getContext(), pointee, std::nullopt);
     }]>,
-    TypeBuilder<(ins
-      "mlir::Type":$pointee, CArg<"unsigned", "0">:$addrSpace), [{
-      return Base::get($_ctxt, pointee, addrSpace);
+    TypeBuilder<(ins "mlir::Type":$pointee), [{
+      return Base::get($_ctxt, pointee, std::nullopt);
     }]>,
   ];
 
   let assemblyFormat = [{
     `<` $pointee ( `,` `addrspace` `(` $addrSpace^ `)` )? `>`
   }];
-
-  let skipDefaultBuilders = 1;
 
   let extraClassDeclaration = [{
     bool isVoidPtr() const {

@@ -29,6 +29,16 @@ unsigned CIRGenTypes::ClangCallConvToCIRCallConv(clang::CallingConv CC) {
   return cir::CallingConv::C;
 }
 
+std::optional<unsigned>
+CIRGenTypes::ClangAddrSpaceToCIRAddrSpace(clang::LangAS AS) {
+  switch (AS) {
+  case LangAS::Default:
+    return std::nullopt;
+  default:
+    return Context.getTargetAddressSpace(AS);
+  }
+}
+
 CIRGenTypes::CIRGenTypes(CIRGenModule &cgm)
     : Context(cgm.getASTContext()), Builder(cgm.getBuilder()), CGM{cgm},
       Target(cgm.getTarget()), TheCXXABI(cgm.getCXXABI()),
@@ -601,7 +611,7 @@ mlir::Type CIRGenTypes::ConvertType(QualType T) {
     auto PointeeType = convertTypeForMem(ETy);
     ResultType = ::mlir::cir::PointerType::get(
         Builder.getContext(), PointeeType,
-        Context.getTargetAddressSpace(ETy.getAddressSpace()));
+        ClangAddrSpaceToCIRAddrSpace(ETy.getAddressSpace()));
     assert(ResultType && "Cannot get pointer type?");
     break;
   }
@@ -618,7 +628,7 @@ mlir::Type CIRGenTypes::ConvertType(QualType T) {
 
     ResultType = ::mlir::cir::PointerType::get(
         Builder.getContext(), PointeeType,
-        Context.getTargetAddressSpace(ETy.getAddressSpace()));
+        ClangAddrSpaceToCIRAddrSpace(ETy.getAddressSpace()));
     assert(ResultType && "Cannot get pointer type?");
     break;
   }

@@ -129,6 +129,9 @@ public:
   /// Convert clang calling convention to LLVM calling convention.
   unsigned ClangCallConvToCIRCallConv(clang::CallingConv CC);
 
+  /// Convert clang address space to CIR address space.
+  std::optional<unsigned> ClangAddrSpaceToCIRAddrSpace(clang::LangAS AS);
+
   /// Derives the 'this' type for CIRGen purposes, i.e. ignoring method CVR
   /// qualification.
   clang::CanQualType DeriveThisType(const clang::CXXRecordDecl *RD,
