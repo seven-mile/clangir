@@ -18,6 +18,8 @@
 #include "ABIInfo.h"
 #include <memory>
 
+#include "clang/CIR/Dialect/IR/CIRAttrs.h"
+
 namespace mlir {
 namespace cir {
 
@@ -30,6 +32,7 @@ public:
   virtual ~TargetLoweringInfo();
 
   const ABIInfo &getABIInfo() const { return *Info; }
+  virtual AddressSpaceAttr::map_t const &getCIRAddrSpaceMap() const;
 };
 
 } // namespace cir

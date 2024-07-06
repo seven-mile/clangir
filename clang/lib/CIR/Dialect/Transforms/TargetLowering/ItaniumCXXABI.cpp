@@ -59,6 +59,15 @@ bool ItaniumCXXABI::classifyReturnType(LowerFunctionInfo &FI) const {
   return false;
 }
 
+class AppleARM64CXXABI : public ItaniumCXXABI {
+public:
+  AppleARM64CXXABI(LowerModule &LM) : ItaniumCXXABI(LM) {
+    Use32BitVTableOffsetABI = true;
+  }
+
+  // RTTI is emitted in CIRGen, omit shouldRTTIBeUnique here
+};
+
 CIRCXXABI *CreateItaniumCXXABI(LowerModule &LM) {
   switch (LM.getCXXABIKind()) {
   // Note that AArch64 uses the generic ItaniumCXXABI class since it doesn't
@@ -67,6 +76,8 @@ CIRCXXABI *CreateItaniumCXXABI(LowerModule &LM) {
   case clang::TargetCXXABI::GenericAArch64:
     return new ItaniumCXXABI(LM, /*UseARMMethodPtrABI=*/true,
                              /*UseARMGuardVarABI=*/true);
+  case clang::TargetCXXABI::AppleARM64:
+    return new AppleARM64CXXABI(LM);
 
   case clang::TargetCXXABI::GenericItanium:
     if (LM.getTargetInfo().getTriple().getArch() == llvm::Triple::le32) {
