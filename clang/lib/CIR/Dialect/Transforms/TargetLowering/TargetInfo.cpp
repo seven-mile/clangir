@@ -8,8 +8,8 @@ TargetLoweringInfo::TargetLoweringInfo(std::unique_ptr<ABIInfo> Info)
 
 TargetLoweringInfo::~TargetLoweringInfo() = default;
 
-AddressSpaceAttr::map_t const &TargetLoweringInfo::getCIRAddrSpaceMap() const {
-  static AddressSpaceAttr::map_t defaultAddrSpaceMap = {0};
+AddressSpaceAttr::MapTy const &TargetLoweringInfo::getCIRAddrSpaceMap() const {
+  static AddressSpaceAttr::MapTy defaultAddrSpaceMap = {0};
   return defaultAddrSpaceMap;
 }
 

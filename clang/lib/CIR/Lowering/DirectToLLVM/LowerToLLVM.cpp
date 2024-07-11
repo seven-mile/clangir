@@ -3501,26 +3501,28 @@ void populateCIRToLLVMConversionPatterns(mlir::RewritePatternSet &patterns,
 
 namespace {
 
-// All CIR AS maps have static lifetime, it's safe to ref it
-mlir::cir::AddressSpaceAttr::map_t const &getCIRASMap(mlir::ModuleOp module) {
+using IRASMap = mlir::cir::AddressSpaceAttr::MapTy;
+
+/// Returns the CIR address space map when available. Returns nullptr if the
+/// triple is not present in the module.
+IRASMap const *getIRAddrSpaceMap(mlir::ModuleOp module) {
   // If the triple is not present, e.g. CIR modules parsed from text, we
   // cannot init LowerModule properly.
   assert(!::cir::MissingFeatures::makeTripleAlwaysPresent());
   // Here we will use a default AS map to ignore all AS stuff.
-  static const mlir::cir::AddressSpaceAttr::map_t defaultASMap{0};
-  if (module->hasAttr("cir.triple")) {
-    mlir::PatternRewriter rewriter{module->getContext()};
-    auto lowerModule = mlir::cir::createLowerModule(module, rewriter);
-    return lowerModule.getTargetLoweringInfo().getCIRAddrSpaceMap();
-  } else {
-    return defaultASMap;
-  }
+  if (!module->hasAttr("cir.triple"))
+    return nullptr;
+  mlir::PatternRewriter rewriter{module->getContext()};
+  auto lowerModule = mlir::cir::createLowerModule(module, rewriter);
+  // All CIR AS maps have static lifetime, it's safe to ref it
+  return &lowerModule.getTargetLoweringInfo().getCIRAddrSpaceMap();
 };
 
 void prepareTypeConverter(mlir::LLVMTypeConverter &converter,
                           mlir::DataLayout &dataLayout,
-                          mlir::cir::AddressSpaceAttr::map_t const &cirASMap) {
-  converter.addConversion([&](mlir::cir::PointerType type) -> mlir::Type {
+                          IRASMap const *cirASMap) {
+  converter.addConversion([&, cirASMap](
+                              mlir::cir::PointerType type) -> mlir::Type {
     // Drop pointee type since LLVM dialect only allows opaque pointers.
 
     auto addrSpace =
@@ -3529,9 +3531,11 @@ void prepareTypeConverter(mlir::LLVMTypeConverter &converter,
     if (!addrSpace)
       return mlir::LLVM::LLVMPointerType::get(type.getContext());
 
+    assert(cirASMap && "CIR AS map is not available");
     // Pass through target addrspace and map CIR addrspace to LLVM addrspace.
-    unsigned targetAS = addrSpace.isTarget() ? addrSpace.getTargetValue()
-                                             : cirASMap[addrSpace.getValue()];
+    unsigned targetAS = addrSpace.isTarget()
+                            ? addrSpace.getTargetValue()
+                            : (*cirASMap)[addrSpace.getValue()];
 
     return mlir::LLVM::LLVMPointerType::get(type.getContext(), targetAS);
   });
@@ -3758,7 +3762,7 @@ void ConvertCIRToLLVMPass::runOnOperation() {
   auto module = getOperation();
   mlir::DataLayout dataLayout(module);
   mlir::LLVMTypeConverter converter(&getContext());
-  prepareTypeConverter(converter, dataLayout, getCIRASMap(module));
+  prepareTypeConverter(converter, dataLayout, getIRAddrSpaceMap(module));
 
   mlir::RewritePatternSet patterns(&getContext());
 

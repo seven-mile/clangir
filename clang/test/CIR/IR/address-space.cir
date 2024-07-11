@@ -13,4 +13,9 @@ module {
   cir.func @test_format2(%arg0: !cir.ptr<!s32i>) {
     cir.return
   }
+
+  // CHECK: @test_format3(%arg0: !cir.ptr<!s32i, addrspace(offload_generic)>)
+  cir.func @test_format3(%arg0: !cir.ptr<!s32i, addrspace(offload_generic)>) {
+    cir.return
+  }
 }

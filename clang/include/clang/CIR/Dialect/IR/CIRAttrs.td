@@ -707,7 +707,7 @@ def AddressSpaceAttr : CIR_Attr<"AddressSpace", "addrspace"> {
   let extraClassDeclaration = [{
     static constexpr char kTargetKeyword[] = "}]#targetASCase.symbol#[{";
     static constexpr int32_t kFirstTargetASValue = }]#targetASCase.value#[{;
-    using map_t = unsigned[kFirstTargetASValue];
+    using MapTy = unsigned[kFirstTargetASValue];
   
     bool isLang() const;
     bool isTarget() const;

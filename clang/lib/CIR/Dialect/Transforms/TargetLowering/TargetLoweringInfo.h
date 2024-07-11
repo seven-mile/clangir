@@ -32,7 +32,7 @@ public:
   virtual ~TargetLoweringInfo();
 
   const ABIInfo &getABIInfo() const { return *Info; }
-  virtual AddressSpaceAttr::map_t const &getCIRAddrSpaceMap() const;
+  virtual AddressSpaceAttr::MapTy const &getCIRAddrSpaceMap() const;
 };
 
 } // namespace cir

@@ -42,7 +42,7 @@ private:
 // SPIR-V other target-specific information
 //===----------------------------------------------------------------------===//
 
-static AddressSpaceAttr::map_t SPIRVAddrSpaceMap = {
+static AddressSpaceAttr::MapTy SPIRVAddrSpaceMap = {
     0, // None
     0, // offload_private
     3, // offload_local
@@ -56,7 +56,7 @@ public:
   SPIRVTargetLoweringInfo(LowerTypes &LT)
       : TargetLoweringInfo(std::make_unique<SPIRVABIInfo>(LT)) {}
 
-  AddressSpaceAttr::map_t const &getCIRAddrSpaceMap() const override {
+  AddressSpaceAttr::MapTy const &getCIRAddrSpaceMap() const override {
     return SPIRVAddrSpaceMap;
   }
 };
